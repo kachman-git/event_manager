@@ -55,22 +55,16 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify(data),
     });
-    const result = await response.json();
-    if (response.ok) {
-      saveToken(result.access_token);
-    }
-    return result;
+    saveToken(response.access_token);
+    return response;
   },
   signin: async (data: AuthDto): Promise<AuthResponse> => {
     const response = await fetchWithAuth("/auth/signin", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    const result = await response.json();
-    if (response.ok) {
-      saveToken(result.access_token);
-    }
-    return result;
+    saveToken(response.access_token);
+    return response;
   },
   logout: (): void => {
     localStorage.removeItem("token");
