@@ -112,9 +112,9 @@ export const eventApi = {
     fetchWithAuth(`/events/${id}`, {
       method: "DELETE",
     }),
-  getAll: (): Promise<Event[]> => fetchWithAuth("/events"),
+  getAll: (): Promise<Event[]> => fetchWithAuth("/events/all"),
   getById: (id: string): Promise<Event> => fetchWithAuth(`/events/${id}`),
-  getMyEvents: (): Promise<Event[]> => fetchWithAuth("/events/my-events"),
+  getMyEvents: (): Promise<Event[]> => fetchWithAuth("/events/me"),
   addTag: (eventId: string, tagName: string): Promise<Event> =>
     fetchWithAuth(`/events/${eventId}/tags`, {
       method: "POST",
