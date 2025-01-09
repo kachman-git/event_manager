@@ -45,17 +45,33 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
 }
 
 // Auth API
+function saveToken(token: string): void {
+  localStorage.setItem("token", token);
+}
+
 export const authApi = {
-  signup: (data: AuthDto): Promise<AuthResponse> =>
-    fetchWithAuth("/auth/signup", {
+  signup: async (data: AuthDto): Promise<AuthResponse> => {
+    const response = await fetchWithAuth("/auth/signup", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
-  signin: (data: AuthDto): Promise<AuthResponse> =>
-    fetchWithAuth("/auth/signin", {
+    });
+    const result = await response.json();
+    if (response.ok) {
+      saveToken(result.access_token);
+    }
+    return result;
+  },
+  signin: async (data: AuthDto): Promise<AuthResponse> => {
+    const response = await fetchWithAuth("/auth/signin", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    });
+    const result = await response.json();
+    if (response.ok) {
+      saveToken(result.access_token);
+    }
+    return result;
+  },
   logout: (): void => {
     localStorage.removeItem("token");
   },
