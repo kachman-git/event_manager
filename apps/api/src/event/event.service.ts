@@ -44,7 +44,6 @@ export class EventService {
         ...dto,
       },
     });
-
     return event;
   }
 
