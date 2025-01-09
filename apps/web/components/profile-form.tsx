@@ -26,29 +26,33 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 
+const isBrowser = typeof window !== "undefined";
+
 const profileSchema = z.object({
   bio: z.string().optional(),
   phoneNumber: z.string().optional(),
   address: z.string().optional(),
-  avatar: z
-    .instanceof(FileList)
-    .optional()
-    .refine(
-      (files) => !files || files.length === 0 || files.length === 1,
-      "Please upload a single file"
-    )
-    .refine(
-      (files) =>
-        !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE,
-      "Max file size is 5MB"
-    )
-    .refine(
-      (files) =>
-        !files ||
-        files.length === 0 ||
-        ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      "Only .jpg, .jpeg, .png and .webp formats are supported"
-    ),
+  avatar: isBrowser
+    ? z
+        .instanceof(FileList)
+        .optional()
+        .refine(
+          (files) => !files || files.length === 0 || files.length === 1,
+          "Please upload a single file"
+        )
+        .refine(
+          (files) =>
+            !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE,
+          "Max file size is 5MB"
+        )
+        .refine(
+          (files) =>
+            !files ||
+            files.length === 0 ||
+            ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+          "Only .jpg, .jpeg, .png and .webp formats are supported"
+        )
+    : z.any().optional(),
 });
 
 interface ProfileFormProps {
