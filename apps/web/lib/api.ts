@@ -75,7 +75,7 @@ export const authApi = {
 export const userApi = {
   getMe: (): Promise<User> => fetchWithAuth("/users/me"),
   edit: (data: EditUserDto): Promise<User> =>
-    fetchWithAuth("/users/me", {
+    fetchWithAuth("/users", {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
@@ -83,14 +83,14 @@ export const userApi = {
 
 // Profile API
 export const profileApi = {
-  getMyProfile: (): Promise<Profile> => fetchWithAuth("/profiles/me"),
+  getMyProfile: (): Promise<Profile> => fetchWithAuth("/profile/me"),
   create: (data: CreateProfileDto): Promise<Profile> =>
     fetchWithAuth("/profiles", {
       method: "POST",
       body: JSON.stringify(data),
     }),
   update: (id: string, data: UpdateProfileDto): Promise<Profile> =>
-    fetchWithAuth(`/profiles/${id}`, {
+    fetchWithAuth(`/profile/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
