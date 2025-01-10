@@ -49,7 +49,7 @@ export function Countdown({ targetDate }: CountdownProps) {
     }
 
     return (
-      <span className="text-2xl font-bold" key={interval}>
+      <span className="text-xl md:text-2xl font-bold" key={interval}>
         {timeLeft[interval]} {interval}{" "}
       </span>
     );
