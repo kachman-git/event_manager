@@ -50,6 +50,7 @@ export default function ProfilePage() {
         setUser(userData);
         const profileData = await profileApi.getMyProfile();
         setProfile(profileData);
+        console.log(profileData);
         const eventsData = await eventApi.getMyEvents();
         setEvents(eventsData);
       } catch (err) {
@@ -158,13 +159,13 @@ export default function ProfilePage() {
               {profile?.phoneNumber && (
                 <div className="flex items-center space-x-2">
                   <Phone className="h-5 w-5 text-gray-500" />
-                  <span>{profile.phoneNumber}</span>
+                  <span>{profile?.phoneNumber}</span>
                 </div>
               )}
               {profile?.address && (
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-5 w-5 text-gray-500" />
-                  <span>{profile.address}</span>
+                  <span>{profile?.address}</span>
                 </div>
               )}
               <div className="flex items-center space-x-2">
