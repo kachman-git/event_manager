@@ -85,11 +85,6 @@ export function ProfileForm({ profile, onSubmit }: ProfileFormProps) {
       if (data.address) formData.append("address", data.address);
       if (data.avatar?.[0]) formData.append("avatar", data.avatar[0]);
 
-      // Log the formData entries
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
-
       await onSubmit(formData as UpdateProfileDto);
       toast({
         title: "Success",

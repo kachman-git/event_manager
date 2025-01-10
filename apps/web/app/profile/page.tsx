@@ -50,7 +50,6 @@ export default function ProfilePage() {
         setUser(userData);
         const profileData = await profileApi.getMyProfile();
         setProfile(profileData);
-        console.log(profileData);
         const eventsData = await eventApi.getMyEvents();
         setEvents(eventsData);
       } catch (err) {
