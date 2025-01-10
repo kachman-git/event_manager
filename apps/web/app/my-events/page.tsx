@@ -46,7 +46,7 @@ function MyEventsPage() {
       for (const event of fetchedEvents) {
         const summary = await rsvpApi.getSummary(event.id);
         summaries[event.id] = summary;
-        const fetchedTags = await tagsApi.getByEventId(event.id);
+        const fetchedTags = await tagsApi.getByEvent(event.id);
         eventTags[event.id] = fetchedTags;
       }
       setRsvpSummaries(summaries);
@@ -88,7 +88,7 @@ function MyEventsPage() {
   };
 
   const handleTagsUpdated = async (eventId: string) => {
-    const updatedTags = await tagsApi.getByEventId(eventId);
+    const updatedTags = await tagsApi.getByEvent(eventId);
     setTags((prevTags) => ({
       ...prevTags,
       [eventId]: updatedTags,
