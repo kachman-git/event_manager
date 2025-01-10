@@ -22,7 +22,7 @@ export default function EventPage() {
     try {
       const fetchedEvent = await eventApi.getById(id as string);
       setEvent(fetchedEvent);
-      const fetchedTags = await tagsApi.getByEventId(id as string);
+      const fetchedTags = await tagsApi.getByEvent(id as string);
       setTags(fetchedTags);
     } catch (err) {
       toast({
