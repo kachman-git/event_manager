@@ -90,7 +90,7 @@ export function ProfileForm({ profile, onSubmit }: ProfileFormProps) {
         console.log(`${key}: ${value}`);
       }
 
-      await onSubmit(formData as unknown as UpdateProfileDto);
+      await onSubmit(formData as UpdateProfileDto);
       toast({
         title: "Success",
         description: profile
