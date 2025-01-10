@@ -42,6 +42,7 @@ type SignInFormValues = z.infer<typeof signInSchema>;
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -54,6 +55,7 @@ export default function SignIn() {
   });
 
   const onSubmit = async (data: SignInFormValues) => {
+    setIsLoading(true);
     try {
       await authApi.signin(data);
       toast({
@@ -69,11 +71,13 @@ export default function SignIn() {
           "Sign in failed. Please check your credentials and try again.",
       });
       console.error("Sign in failed:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center min-h-screen ">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -123,7 +127,7 @@ export default function SignIn() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" loading={isLoading}>
             Sign In
           </Button>
           <p className="text-center text-sm">

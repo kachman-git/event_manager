@@ -43,6 +43,7 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -56,6 +57,7 @@ export default function SignUp() {
   });
 
   const onSubmit = async (data: SignUpFormValues) => {
+    setIsLoading(true);
     try {
       await authApi.signup(data);
       toast({
@@ -70,11 +72,13 @@ export default function SignUp() {
         description: "Sign up failed. Please try again.",
       });
       console.error("Sign up failed:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center min-h-screen ">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -137,7 +141,7 @@ export default function SignUp() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" loading={isLoading}>
             Sign Up
           </Button>
           <p className="text-center text-sm">
