@@ -25,14 +25,23 @@ const signInSchema = z.object({
     .string()
     .email("Invalid email address")
     .nonempty("Email is required"),
-  password: z.string().nonempty("Password is required"),
+  password: z
+    .string()
+    .nonempty("Password is required")
+    .min(8, "Password must be at least 8 characters long")
+    .regex(/(?=.*[a-z])/, "Password must contain at least one lowercase letter")
+    .regex(/(?=.*[A-Z])/, "Password must contain at least one uppercase letter")
+    .regex(/(?=.*\d)/, "Password must contain at least one number")
+    .regex(
+      /(?=.*[@$!%*?&])/,
+      "Password must contain at least one special character"
+    ),
 });
 
 type SignInFormValues = z.infer<typeof signInSchema>;
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -45,7 +54,6 @@ export default function SignIn() {
   });
 
   const onSubmit = async (data: SignInFormValues) => {
-    setIsLoading(true);
     try {
       await authApi.signin(data);
       toast({
@@ -61,17 +69,15 @@ export default function SignIn() {
           "Sign in failed. Please check your credentials and try again.",
       });
       console.error("Sign in failed:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen ">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full max-w-md space-y-4 p-8 rounded-xl shadow-md"
+          className="w-full max-w-md space-y-4 bg-white p-8 rounded-xl shadow-md"
         >
           <h2 className="text-2xl font-bold text-center mb-6">Sign In</h2>
           <FormField
@@ -117,7 +123,7 @@ export default function SignIn() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" loading={isLoading}>
+          <Button type="submit" className="w-full">
             Sign In
           </Button>
           <p className="text-center text-sm">

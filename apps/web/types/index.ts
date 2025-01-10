@@ -74,6 +74,7 @@ export interface AuthDto {
   password: string;
 }
 export interface AuthDtoSignin {
+  name?: string;
   email: string;
   password: string;
 }

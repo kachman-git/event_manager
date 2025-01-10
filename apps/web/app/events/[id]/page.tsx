@@ -69,15 +69,21 @@ export default function EventPage() {
             </header>
             <Card className="mb-8 bg-card text-card-foreground">
               <CardHeader>
-                <CardTitle className="text-3xl font-bold">{event.title}</CardTitle>
+                <CardTitle className="text-3xl font-bold">
+                  {event.title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-4">{event.description}</p>
                 <p className="text-muted-foreground mb-4">
-                  <strong className="text-foreground">Location:</strong> {event.location}
+                  {event.description}
                 </p>
                 <p className="text-muted-foreground mb-4">
-                  <strong className="text-foreground">Date:</strong> {new Date(event.date).toLocaleString()}
+                  <strong className="text-foreground">Location:</strong>{" "}
+                  {event.location}
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  <strong className="text-foreground">Date:</strong>{" "}
+                  {new Date(event.date).toLocaleString()}
                 </p>
                 <div className="mb-6">
                   <Countdown targetDate={new Date(event.date)} />
@@ -103,4 +109,3 @@ export default function EventPage() {
     </div>
   );
 }
-
