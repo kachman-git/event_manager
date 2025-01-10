@@ -1,58 +1,71 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { eventApi, rsvpApi } from "@/lib/api";
-import { Event, RSVPSummary } from "@/types";
+import { eventApi, rsvpApi, tagsApi } from "@/lib/api";
+import { Event, RSVPSummary, Tag } from "@/types";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, TagIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { TagManagement } from "@/components/tag-management";
 
-export default function MyEventsPage() {
+function MyEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [rsvpSummaries, setRsvpSummaries] = useState<{
     [key: string]: RSVPSummary[];
   }>({});
+  const [tags, setTags] = useState<{ [key: string]: Tag[] }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const fetchedEvents = await eventApi.getMyEvents();
-        setEvents(fetchedEvents);
+  const fetchEvents = useCallback(async () => {
+    try {
+      const fetchedEvents = await eventApi.getMyEvents();
+      setEvents(fetchedEvents);
 
-        const summaries: { [key: string]: RSVPSummary[] } = {};
-        for (const event of fetchedEvents) {
-          const summary = await rsvpApi.getSummary(event.id);
-          summaries[event.id] = summary;
-        }
-        setRsvpSummaries(summaries);
-      } catch (err) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch events. Please try again.",
-        });
-        setError("Failed to fetch events");
-      } finally {
-        setLoading(false);
+      const summaries: { [key: string]: RSVPSummary[] } = {};
+      const eventTags: { [key: string]: Tag[] } = {};
+      for (const event of fetchedEvents) {
+        const summary = await rsvpApi.getSummary(event.id);
+        summaries[event.id] = summary;
+        const fetchedTags = await tagsApi.getByEventId(event.id);
+        eventTags[event.id] = fetchedTags;
       }
-    };
-
-    fetchEvents();
+      setRsvpSummaries(summaries);
+      setTags(eventTags);
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch events. Please try again.",
+      });
+      setError("Failed to fetch events");
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const handleDelete = async (eventId: string) => {
     if (confirm("Are you sure you want to delete this event?")) {
@@ -72,6 +85,14 @@ export default function MyEventsPage() {
         setError("Failed to delete event");
       }
     }
+  };
+
+  const handleTagsUpdated = async (eventId: string) => {
+    const updatedTags = await tagsApi.getByEventId(eventId);
+    setTags((prevTags) => ({
+      ...prevTags,
+      [eventId]: updatedTags,
+    }));
   };
 
   if (loading) {
@@ -124,22 +145,58 @@ export default function MyEventsPage() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-4">
+                <p className="text-sm font-semibold mb-2">Tags:</p>
+                <div className="flex flex-wrap gap-2">
+                  {tags[event.id]?.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="bg-primary/20 text-primary text-xs font-semibold px-2.5 py-0.5 rounded"
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </CardContent>
-            <CardFooter className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push(`/edit-event/${event.id}`)}
-              >
-                <Edit className="mr-2 h-4 w-4" /> Edit
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDelete(event.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-              </Button>
+            <CardFooter className="flex justify-between items-center">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center"
+                  >
+                    <TagIcon className="mr-2 h-4 w-4" /> Manage Tags
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Manage Tags</DialogTitle>
+                  </DialogHeader>
+                  <TagManagement
+                    eventId={event.id}
+                    tags={tags[event.id] || []}
+                    onTagsUpdated={() => handleTagsUpdated(event.id)}
+                  />
+                </DialogContent>
+              </Dialog>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/edit-event/${event.id}`)}
+                >
+                  <Edit className="mr-2 h-4 w-4" /> Edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(event.id)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         ))}
@@ -148,4 +205,4 @@ export default function MyEventsPage() {
   );
 }
 
-
+export default MyEventsPage;

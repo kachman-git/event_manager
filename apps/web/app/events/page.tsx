@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import Link from "next/link";
 
-function EventsPage() {
+export default function EventsPage() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +39,17 @@ function EventsPage() {
     fetchEvents();
   }, [fetchEvents]);
 
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchEvents();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [fetchEvents]);
+
   const sortEvents = () => {
     const sortedEvents = [...events].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
@@ -49,36 +60,13 @@ function EventsPage() {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
-  const handleDeleteEvent = async (eventId: string) => {
-    if (
-      confirm(
-        "Are you sure you want to delete this event? This will also delete all associated tags."
-      )
-    ) {
-      try {
-        await eventApi.delete(eventId);
-        setEvents(events.filter((event) => event.id !== eventId));
-        toast({
-          title: "Success",
-          description: "Event and associated tags deleted successfully",
-        });
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to delete event and tags. Please try again.",
-        });
-      }
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+        <div className="bg-card shadow-xl rounded-lg overflow-hidden">
           <div className="p-6 sm:p-8">
             <header className="flex flex-col sm:flex-row justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-0">
+              <h1 className="text-3xl font-bold text-foreground mb-4 sm:mb-0">
                 Events
               </h1>
               <div className="flex items-center space-x-4">
@@ -100,7 +88,7 @@ function EventsPage() {
               <Button
                 onClick={sortEvents}
                 variant="outline"
-                className="flex items-center text-gray-700 dark:text-gray-300"
+                className="flex items-center"
               >
                 Sort by Date{" "}
                 {sortOrder === "asc" ? "(Ascending)" : "(Descending)"}
@@ -115,10 +103,7 @@ function EventsPage() {
                   <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
                     <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
                       <div className="max-h-[70vh] overflow-y-auto scrollbar-hide">
-                        <EventsTable
-                          events={events}
-                          onDeleteEvent={handleDeleteEvent}
-                        />
+                        <EventsTable events={events} />
                       </div>
                     </div>
                   </div>
@@ -131,5 +116,3 @@ function EventsPage() {
     </div>
   );
 }
-
-export default EventsPage;

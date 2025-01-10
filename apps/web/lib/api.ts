@@ -1,29 +1,26 @@
 import {
+  AuthDto,
   CreateEventDto,
+  CreateProfileDto,
   UpdateEventDto,
+  UpdateProfileDto,
   Event,
+  Profile,
+  AuthResponse,
   CreateTagDto,
   UpdateTagDto,
-  Tag,
-  AuthDto,
-  AuthResponse,
-  CreateProfileDto,
-  UpdateProfileDto,
-  Profile,
   EditUserDto,
-  User,
   RSVPDto,
   RSVP,
+  Tag,
+  User,
   RSVPSummary,
+  AuthDtoSignin,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  if (!API_BASE_URL) {
-    throw new Error("API_BASE_URL is not defined");
-  }
-
+async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem("token");
   const headers = {
     "Content-Type": "application/json",
@@ -31,73 +28,23 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     Authorization: `Bearer ${token}`,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "An error occurred");
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
 
   return response.json();
 }
 
-// Auth API
-function saveToken(token: string): void {
-  localStorage.setItem("token", token);
-}
-
-export const authApi = {
-  signup: async (data: AuthDto): Promise<AuthResponse> => {
-    const response = await fetchWithAuth("/auth/signup", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    saveToken(response.access_token);
-    return response;
-  },
-  signin: async (data: AuthDto): Promise<AuthResponse> => {
-    const response = await fetchWithAuth("/auth/signin", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    saveToken(response.access_token);
-    return response;
-  },
-  logout: (): void => {
-    localStorage.removeItem("token");
-  },
-};
-
-// User API
-export const userApi = {
-  getMe: (): Promise<User> => fetchWithAuth("/users/me"),
-  edit: (data: EditUserDto): Promise<User> =>
-    fetchWithAuth("/users", {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }),
-};
-
-// Profile API
-export const profileApi = {
-  getMyProfile: (): Promise<Profile> => fetchWithAuth("/profile/me"),
-  create: (data: CreateProfileDto): Promise<Profile> =>
-    fetchWithAuth("/profiles", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  update: (id: string, data: UpdateProfileDto): Promise<Profile> =>
-    fetchWithAuth(`/profile/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }),
-};
-
 // Event API
 export const eventApi = {
+  getAll: (): Promise<Event[]> => fetchWithAuth("/events/all"),
+  getMyEvents: (): Promise<Event[]> => fetchWithAuth("/events/me"),
+  getById: (id: string): Promise<Event> => fetchWithAuth(`/events/${id}`),
   create: (data: CreateEventDto): Promise<Event> =>
     fetchWithAuth("/events", {
       method: "POST",
@@ -112,22 +59,76 @@ export const eventApi = {
     fetchWithAuth(`/events/${id}`, {
       method: "DELETE",
     }),
-  getAll: (): Promise<Event[]> => fetchWithAuth("/events/all"),
-  getById: (id: string): Promise<Event> => fetchWithAuth(`/events/${id}`),
-  getMyEvents: (): Promise<Event[]> => fetchWithAuth("/events/me"),
-  addTag: (eventId: string, tagName: string): Promise<Event> =>
-    fetchWithAuth(`/events/${eventId}/tags`, {
+};
+
+export const authApi = {
+  signup: async (data: AuthDto): Promise<AuthResponse> => {
+    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
       method: "POST",
-      body: JSON.stringify({ name: tagName }),
-    }),
-  removeTag: (eventId: string, tagId: string): Promise<Event> =>
-    fetchWithAuth(`/events/${eventId}/tags/${tagId}`, {
-      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (response.ok) {
+      setAuthToken(result.access_token);
+    }
+    return result;
+  },
+  signin: async (data: AuthDtoSignin): Promise<AuthResponse> => {
+    const response = await fetch(`${API_BASE_URL}/auth/signin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (response.ok) {
+      setAuthToken(result.access_token);
+    }
+    return result;
+  },
+  logout: () => {
+    localStorage.removeItem("token");
+  },
+};
+
+// User API
+export const userApi = {
+  getMe: (): Promise<User> => fetchWithAuth("/users/me"),
+  edit: (data: EditUserDto): Promise<User> =>
+    fetchWithAuth("/users", {
+      method: "PATCH",
+      body: JSON.stringify(data),
     }),
 };
 
-// Tag API
-export const tagApi = {
+export const profileApi = {
+  create: (data: CreateProfileDto): Promise<Profile> =>
+    fetchWithAuth("/profile", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (id: string, data: UpdateProfileDto): Promise<Profile> =>
+    fetchWithAuth(`/profile/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  getMyProfile: (): Promise<Profile> => fetchWithAuth("/profile/me"),
+};
+
+export const rsvpApi = {
+  createOrUpdate: (data: RSVPDto): Promise<RSVP> =>
+    fetchWithAuth("/rsvps", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  getUserRSVPs: (): Promise<RSVP[]> => fetchWithAuth("/rsvps"),
+  getByEvent: (eventId: string): Promise<RSVP> =>
+    fetchWithAuth(`/rsvps/${eventId}`),
+  getSummary: (eventId: string): Promise<RSVPSummary[]> =>
+    fetchWithAuth(`/rsvps/events/${eventId}`),
+};
+
+export const tagsApi = {
   create: (data: CreateTagDto): Promise<Tag> =>
     fetchWithAuth("/tags", {
       method: "POST",
@@ -142,21 +143,10 @@ export const tagApi = {
     fetchWithAuth(`/tags/${id}`, {
       method: "DELETE",
     }),
-  getAll: (): Promise<Tag[]> => fetchWithAuth("/tags"),
   getByEventId: (eventId: string): Promise<Tag[]> =>
-    fetchWithAuth(`/tags/event/${eventId}`),
+    fetchWithAuth(`/tags/${eventId}`),
 };
 
-// RSVP API
-export const rsvpApi = {
-  createOrUpdate: (data: RSVPDto): Promise<RSVP> =>
-    fetchWithAuth("/rsvps", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  getByEventId: (eventId: string): Promise<RSVP[]> =>
-    fetchWithAuth(`/rsvps/event/${eventId}`),
-  getUserRSVPs: (): Promise<RSVP[]> => fetchWithAuth("/rsvps/user"),
-  getSummary: (eventId: string): Promise<RSVPSummary[]> =>
-    fetchWithAuth(`/rsvps/summary/${eventId}`),
-};
+function setAuthToken(token: string) {
+  localStorage.setItem("token", token);
+}

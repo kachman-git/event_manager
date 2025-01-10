@@ -1,96 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Event, UpdateEventDto } from "@/types";
-import { eventApi } from "@/lib/api";
-import { EventForm } from "@/components/event-form";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Loader2, Edit, Trash2 } from "lucide-react";
-import { BackButton } from "@/components/back-button";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { Event, Tag } from "@/types";
+import { eventApi, tagsApi } from "@/lib/api";
+import { UserNav } from "@/components/user-nav";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { BackButton } from "@/components/back-button";
+import { Countdown } from "@/components/countdown";
 
-function EventPage() {
-  const router = useRouter();
+export default function EventPage() {
   const { id } = useParams();
   const [event, setEvent] = useState<Event | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        const fetchedEvent = await eventApi.getById(id as string);
-        setEvent(fetchedEvent);
-      } catch (err) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch event details",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvent();
-  }, [id, toast]);
-
-  const handleUpdate = async (data: UpdateEventDto) => {
+  const fetchEventAndTags = async () => {
     try {
-      const updatedEvent = await eventApi.update(id as string, data);
-      setEvent(updatedEvent);
-      setIsEditing(false);
-      toast({
-        title: "Success",
-        description: "Event updated successfully",
-      });
-    } catch (error) {
+      const fetchedEvent = await eventApi.getById(id as string);
+      setEvent(fetchedEvent);
+      const fetchedTags = await tagsApi.getByEventId(id as string);
+      setTags(fetchedTags);
+    } catch (err) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update event",
+        description: "Failed to fetch event details. Please try again later.",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this event? This will also delete all associated tags."
-      )
-    ) {
-      try {
-        await eventApi.delete(id as string);
-        toast({
-          title: "Success",
-          description: "Event and associated tags deleted successfully",
-        });
-        router.push("/events");
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to delete event and tags",
-        });
-      }
-    }
-  };
+  useEffect(() => {
+    fetchEventAndTags();
+  }, [id, toast]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!event) {
@@ -109,65 +59,48 @@ function EventPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <BackButton />
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>{isEditing ? "Edit Event" : event.title}</CardTitle>
-          <CardDescription>
-            {isEditing
-              ? "Update the details of your event."
-              : `Event on ${new Date(event.date).toLocaleDateString()}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isEditing ? (
-            <EventForm event={event} onSubmit={handleUpdate} />
-          ) : (
-            <div className="space-y-4">
-              <p>
-                <strong>Description:</strong> {event.description}
-              </p>
-              <p>
-                <strong>Location:</strong> {event.location}
-              </p>
-              <p>
-                <strong>Date:</strong> {new Date(event.date).toLocaleString()}
-              </p>
-              <div>
-                <strong>Tags:</strong>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {event.tags?.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-sm"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-card shadow-xl rounded-lg overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <header className="flex justify-between items-center mb-8">
+              <BackButton />
+              <UserNav />
+            </header>
+            <Card className="mb-8 bg-card text-card-foreground">
+              <CardHeader>
+                <CardTitle className="text-3xl font-bold">{event.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">{event.description}</p>
+                <p className="text-muted-foreground mb-4">
+                  <strong className="text-foreground">Location:</strong> {event.location}
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  <strong className="text-foreground">Date:</strong> {new Date(event.date).toLocaleString()}
+                </p>
+                <div className="mb-6">
+                  <Countdown targetDate={new Date(event.date)} />
                 </div>
-              </div>
-              <div className="flex space-x-2 mt-4">
-                <Button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center"
-                >
-                  <Edit className="mr-2 h-4 w-4" /> Edit Event
-                </Button>
-                <Button
-                  onClick={handleDelete}
-                  variant="destructive"
-                  className="flex items-center"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete Event
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="bg-primary/20 text-primary text-xs font-semibold px-2.5 py-0.5 rounded"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default EventPage;

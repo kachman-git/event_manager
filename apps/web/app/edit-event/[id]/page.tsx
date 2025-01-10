@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Event, CreateEventDto, UpdateEventDto } from "@/types";
-import { eventApi } from "@/lib/api";
 import { EventForm } from "@/components/event-form";
-import { Button } from "@/components/ui/button";
+import { eventApi } from "@/lib/api";
+import { UpdateEventDto, Event } from "@/types";
 import {
   Card,
   CardContent,
@@ -13,16 +12,15 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Loader2, Edit, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { useToast } from "@/hooks/use-toast";
 
-function EventPage() {
+export default function EditEventPage() {
   const router = useRouter();
   const { id } = useParams();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,7 +32,7 @@ function EventPage() {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to fetch event details",
+          description: "Failed to fetch event",
         });
       } finally {
         setLoading(false);
@@ -44,50 +42,20 @@ function EventPage() {
     fetchEvent();
   }, [id, toast]);
 
-  const handleUpdate = async (data: CreateEventDto | UpdateEventDto) => {
+  const handleSubmit = async (data: UpdateEventDto) => {
     try {
-      const updatedEvent = await eventApi.update(
-        id as string,
-        {
-          ...data,
-          tags: data.tags ? data.tags.map((tagName) => tagName) : [],
-        } as unknown as UpdateEventDto
-      );
-      setEvent(updatedEvent);
-      setIsEditing(false);
+      await eventApi.update(id as string, data);
       toast({
         title: "Success",
         description: "Event updated successfully",
       });
+      router.push("/my-events");
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update event",
+        description: "Failed to update event. Please try again.",
       });
-    }
-  };
-
-  const handleDelete = async () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this event? This will also delete all associated tags."
-      )
-    ) {
-      try {
-        await eventApi.delete(id as string);
-        toast({
-          title: "Success",
-          description: "Event and associated tags deleted successfully",
-        });
-        router.push("/events");
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to delete event and tags",
-        });
-      }
     }
   };
 
@@ -119,67 +87,13 @@ function EventPage() {
       <BackButton />
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>{isEditing ? "Edit Event" : event.title}</CardTitle>
-          <CardDescription>
-            {isEditing
-              ? "Update the details of your event."
-              : `Event on ${new Date(event.date).toLocaleDateString()}`}
-          </CardDescription>
+          <CardTitle>Edit Event</CardTitle>
+          <CardDescription>Update the details of your event.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isEditing ? (
-            <EventForm
-              event={{
-                ...event,
-                tags: event.tags || [],
-              }}
-              onSubmit={handleUpdate}
-            />
-          ) : (
-            <div className="space-y-4">
-              <p>
-                <strong>Description:</strong> {event.description}
-              </p>
-              <p>
-                <strong>Location:</strong> {event.location}
-              </p>
-              <p>
-                <strong>Date:</strong> {new Date(event.date).toLocaleString()}
-              </p>
-              <div>
-                <strong>Tags:</strong>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {event.tags?.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-sm"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="flex space-x-2 mt-4">
-                <Button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center"
-                >
-                  <Edit className="mr-2 h-4 w-4" /> Edit Event
-                </Button>
-                <Button
-                  onClick={handleDelete}
-                  variant="destructive"
-                  className="flex items-center"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete Event
-                </Button>
-              </div>
-            </div>
-          )}
+          <EventForm event={event} onSubmit={handleSubmit} />
         </CardContent>
       </Card>
     </div>
   );
 }
-
-export default EventPage;

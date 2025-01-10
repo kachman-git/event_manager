@@ -2,19 +2,19 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/custom-button";
 import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { tagApi } from "@/lib/api";
-import { CreateTagDto, UpdateTagDto } from "@/types";
+import { tagsApi } from "@/lib/api";
+import { CreateTagDto } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 const tagSchema = z.object({
   name: z.string().min(1, "Tag name is required"),
@@ -22,32 +22,38 @@ const tagSchema = z.object({
 });
 
 interface TagFormProps {
-  tag?: CreateTagDto & { id?: string };
-  onSubmit: (data: CreateTagDto | UpdateTagDto) => void;
+  eventId: string;
+  onTagAdded: () => void;
 }
 
-export function TagForm({ tag, onSubmit }: TagFormProps) {
+export function TagForm({ eventId, onTagAdded }: TagFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof tagSchema>>({
     resolver: zodResolver(tagSchema),
-    defaultValues: tag || {
+    defaultValues: {
       name: "",
-      eventId: "",
+      eventId: eventId,
     },
   });
 
-  const handleSubmit = async (data: z.infer<typeof tagSchema>) => {
+  const onSubmit = async (data: z.infer<typeof tagSchema>) => {
     setIsSubmitting(true);
     try {
-      if (tag?.id) {
-        await tagApi.update(tag.id, data);
-      } else {
-        await tagApi.create(data);
-      }
-      onSubmit(data);
+      await tagsApi.create(data as CreateTagDto);
+      toast({
+        title: "Success",
+        description: "Tag added successfully",
+      });
+      form.reset({ name: "", eventId: eventId });
+      onTagAdded();
     } catch (error) {
-      console.error("Failed to submit tag:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add tag. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -55,7 +61,7 @@ export function TagForm({ tag, onSubmit }: TagFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -63,31 +69,22 @@ export function TagForm({ tag, onSubmit }: TagFormProps) {
             <FormItem>
               <FormLabel>Tag Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter tag name" {...field} />
+                <Input
+                  placeholder="Enter tag name"
+                  {...field}
+                  className="bg-background text-foreground"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="eventId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Event ID</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter event ID" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? "Submitting..."
-            : tag?.id
-              ? "Update Tag"
-              : "Create Tag"}
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="bg-primary text-primary-foreground"
+        >
+          {isSubmitting ? "Adding..." : "Add Tag"}
         </Button>
       </form>
     </Form>

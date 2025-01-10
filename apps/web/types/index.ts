@@ -3,7 +3,7 @@ export interface Event {
   title: string;
   description: string;
   location: string;
-  date: string; // Full ISO-8601 datetime string
+  date: string;
   organizerId: string;
   createdAt: string;
   updatedAt: string;
@@ -44,16 +44,14 @@ export interface CreateEventDto {
   title: string;
   description: string;
   location: string;
-  date: string; // Full ISO-8601 datetime string
-  tags: string[]; // Array of tag names
+  date: string;
 }
 
 export interface UpdateEventDto {
   title?: string;
   description?: string;
   location?: string;
-  date?: string; // Full ISO-8601 datetime string
-  tags?: string[]; // Array of tag names
+  date?: string;
 }
 
 export interface CreateProfileDto {
@@ -72,6 +70,10 @@ export interface UpdateProfileDto {
 
 export interface AuthDto {
   name: string;
+  email: string;
+  password: string;
+}
+export interface AuthDtoSignin {
   email: string;
   password: string;
 }
@@ -103,4 +105,3 @@ export interface RSVPSummary {
   status: "GOING" | "MAYBE" | "NOT_GOING";
   count: number;
 }
-
