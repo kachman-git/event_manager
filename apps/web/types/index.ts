@@ -7,7 +7,7 @@ export interface Event {
   organizerId: string;
   createdAt: string;
   updatedAt: string;
-  tags: Tag[]; // Changed from optional to required
+  tags: Tag[];
   rsvps?: RSVP[];
 }
 
